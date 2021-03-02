@@ -14,9 +14,11 @@ open func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?)
 
 例如，当发生触摸事件时，`UIApplication`会触发`func sendEvent(_ event: UIEvent)`将封装好的`UIEvent`传递给当前的`UIWindow`，`UIWindow`会继续传给`UIViewController`，接下来传给`UIViewController`的根view，从这里开始视图层级将变得复杂起来。
 确定第一响应者过程中有一个关键函数：
-```
+
+```Swift
 func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView?
 ```
+
 称之为命中测试(hit-testing), 具体过程如下：
 
 - 检查自身是否同时符合以下三个条件：
@@ -27,7 +29,9 @@ func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView?
 
 - 检查坐标是否在自身内部，这里使用了关键函数：
 
-`func point(inside point: CGPoint, with event: UIEvent?) -> Bool`
+```Swift
+func point(inside point: CGPoint, with event: UIEvent?) -> Bool
+```
 
 该方法还可以被重写来实现更多扩展功能，例如支持超出自身范围内的子view响应点击事件
 
@@ -37,31 +41,31 @@ func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView?
 
 逻辑大概如下：
 
-```
-	func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
-		guard isUserInteractionEnabled && !isHidden && alpha > 0.01 else {
-			// 此视图无法响应event
-		   return nil
-	   }
-	   if self.point(inside: point, with: event) {
-	   		// 触摸区域在该视图内，从后向前遍历子视图
-	       for subview in subviews.reversed() {
-	       	let convertedPoint = subview.convert(point, from: self)
-	       	if let targetView = subview.hitTest(convertedPoint, with: event) {
-	       		// 找到该子视图及其子视图们中响应该事件的view
-	       		return targetView
-	       	} else {
-	       		// 当前子视图及其子视图们不响应该事件，继续遍历下一个
-	       		continue
-	       	}
-	       	// 所有子视图都没有响应该事件，所以是自身响应该事件
-	       	return self
-	       }
-	   } else {
-	       // 此触摸区域不在该视图内
-	   	   return nil
-	   }
+```Swift
+func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+	guard isUserInteractionEnabled && !isHidden && alpha > 0.01 else {
+		// 此视图无法响应event
+		return nil
 	}
+	if self.point(inside: point, with: event) {
+		// 触摸区域在该视图内，从后向前遍历子视图
+	   for subview in subviews.reversed() {
+	       let convertedPoint = subview.convert(point, from: self)
+	       if let targetView = subview.hitTest(convertedPoint, with: event) {
+	       		// 找到该子视图及其子视图们中响应该事件的view
+	      		return targetView
+	      	} else {
+	      		// 当前子视图及其子视图们不响应该事件，继续遍历下一个
+	      		continue
+	      	}  	
+		}
+		// 所有子视图都没有响应该事件，所以是自身响应该事件
+	    return self
+	} else {
+	   	// 此触摸区域不在该视图内
+		return nil
+	}
+}
 ```
 
 **确定触摸事件响应链**
@@ -101,13 +105,13 @@ subview -> superview -> ... -> UIViewController.view -> UIViewController -> UIWi
 
 四大系统的绘图框架结构：
 
-[UIKit] [AppKit]
+[`UIKit`] [`AppKit`]
 
-[Core Animation]
+[`Core Animation`]
 
-[OpenGL/Metal] [Core Graphics]
+[`OpenGL/Metal`] [`Core Graphics`]
 
-[Hardware]
+[`Hardware`]
  
 
 #### 简述渲染的三棵树
@@ -117,6 +121,8 @@ subview -> superview -> ... -> UIViewController.view -> UIViewController -> UIWi
 - Rendering Layer Tree(渲染树，私有)
 
 通常在每次屏幕刷新时，P树会和M树同步状态。但当加入`CAAnimation`并执行动画时，这个同步过程会被取代，P树将随着动画的进程不断改变，直到动画结束后P树和M树同步，这是因为`CAAnimation`在默认执行完的情况下会从`CALayer`中移除，即`removedOnCompletion`为`true`, 要想在动画结束后保留最终状态，可以将`fillMode`设置为`.forward`，并将`removedOnCompletion `置为`false`
+
+更多阅读：[iOS | 动画解释](https://objccn.io/issue-12-1/)
 
 #### 什么是异步渲染
 
